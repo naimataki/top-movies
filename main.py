@@ -7,6 +7,10 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, FloatField, IntegerField
 from wtforms.validators import DataRequired
 import requests
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 '''
 Red underlines? Install the required packages first: 
@@ -20,6 +24,17 @@ pip3 install -r requirements.txt
 
 This will install the packages from requirements.txt for this project.
 '''
+
+API_KEY = os.environ["API_KEY"]
+AUTHORIZATION = os.environ["API_KEY"]
+url = 'https://api.themoviedb.org/3/search/movie'
+
+headers = {
+    "accept": "application/json",
+    "Authorization": AUTHORIZATION
+}
+
+response = requests.get(url, headers=headers)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '8BYkEfBA6O6donzWlSihBXox7C0sKR6b'
@@ -95,10 +110,20 @@ def home():
 def add():
     form = AddMovieForm()
     if form.validate_on_submit():
+        movie_title = form.title.data
+        headers = {
+            "accept": "application/json",
+            "Authorization": AUTHORIZATION
+        }
+        body = {
+            'query': movie_title,
+        }
+        response = requests.get(url, headers=headers, data=body)
+        results = response.json()["results"]
         #new_movie = Movie(title=request.title.data)
         #db.session.add(new_movie)
         #db.session.commit()
-        return redirect(url_for('home'))
+        return render_template('select.html', results=results)
     return render_template('add.html', form=form)
 
 @app.route("/edit", methods=['GET', 'POST'])
